@@ -1,0 +1,271 @@
+a)	Create a new Spring Boot project.
+Aim: To bootstrap a structured Spring Boot application via Spring Initializr containing the required dependencies for publishing a SOAP-based web service. 
+Procedure:
+1.	Navigate to the online initialization interface at [https://start.spring.io/](https://start.spring.io/). 
+2.	Configure the project parameters exactly as follows: 
+o	Project: Maven Project 
+o	Language: Java 
+o	Spring Boot: Latest Stable Version 
+3.	Click Add Dependencies and select the mandatory module: 
+o	Spring Web Services (Provides SOAP web service capabilities, handling XML message parsing and WSDL generation features).
+4.	Select Generate to export and download the project bundle zip file. 
+5.	Unpack the compressed archive and import the root folder into your IDE (VS Code / IntelliJ). 
+
+b)	Define a service interface (e.g., UserService).
+Aim: To establish a structural service interface mapping the contract signatures for user record management. 
+Project Structure:
+demo/
+ ├── src/
+ │   ├── main/
+ │   │   ├── java/com/example/demo/
+ │   │   │   ├── DemoApplication.java
+ │   │   │   ├── config/
+ │   │   │   │   └── WebServiceConfig.java
+ │   │   │   ├── endpoint/
+ │   │   │   │   └── UserEndpoint.java
+ │   │   │   ├── model/
+ │   │   │   │   └── SoapUser.java
+ │   │   │   └── service/
+ │   │   │       ├── UserService.java
+ │   │   │       └── UserServiceImpl.java
+ │   │   └── resources/
+ │   │       ├── users.xsd
+ │   │       └── application.properties
+ └── pom.xml
+
+User Service Interface (UserService.java):
+package com.example.demo.service;
+
+import com.example.demo.model.SoapUser;
+
+public interface UserService {
+    SoapUser getUserById(Long id);
+}
+
+c)	 Implement service using @Service.
+Aim: To write the service implementation layer annotated with @Service and populate an internal mock collection to serve incoming SOAP data requests. 
+User Domain Model POJO (SoapUser.java):
+package com.example.demo.model;
+
+public class SoapUser {
+    private Long id;
+    private String name;
+    private String email;
+
+    public SoapUser() {}
+
+    public SoapUser(Long id, String name, String email) {
+        this.id = id;
+        this.name = name;
+        this.email = email;
+    }
+
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
+    public String getName() { return name; }
+    public void setName(String name) { this.name = name; }
+    public String getEmail() { return email; }
+    public void setEmail(String email) { this.email = email; }
+}
+User Service Implementation (UserServiceImpl.java):
+package com.example.demo.service;
+
+import com.example.demo.model.SoapUser;
+import org.springframework.stereotype.Service;
+import java.util.HashMap;
+import java.util.Map;
+
+@Service // Annotate service with @Service
+public class UserServiceImpl implements UserService {
+
+    private static final Map<Long, SoapUser> mockStorage = new HashMap<>();
+
+    static {
+        // Seeding database records matching lab configuration paths
+        mockStorage.put(1L, new SoapUser(1L, "Rahul Kumar", "rahul@aditya.edu.in"));
+        mockStorage.put(2L, new SoapUser(2L, "Ananya Sen", "ananya@aditya.edu.in"));
+    }
+
+    @Override
+    public SoapUser getUserById(Long id) {
+        return mockStorage.get(id);
+    }
+}
+
+d)	 Create a WSDL file.
+Aim: To generate a WSDL (Web Services Description Language) file dynamically out of a data definition XML Schema (.xsd) file configured inside the application runtime framework context. 
+
+XML Schema Definition (src/main/resources/users.xsd):
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" 
+           xmlns:tns="http://example.com/demo/webservice"
+           targetNamespace="http://example.com/demo/webservice" 
+           elementFormDefault="qualified">
+
+    <!-- Incoming request root schema -->
+    <xs:element name="GetUserRequest">
+        <xs:complexType>
+            <xs:sequence>
+                <xs:element name="id" type="xs:long"/>
+            </xs:sequence>
+        </xs:complexType>
+    </xs:element>
+
+    <!-- Outgoing response root schema -->
+    <xs:element name="GetUserResponse">
+        <xs:complexType>
+            <xs:sequence>
+                <xs:element name="id" type="xs:long"/>
+                <xs:element name="name" type="xs:string"/>
+                <xs:element name="email" type="xs:string"/>
+            </xs:sequence>
+        </xs:complexType>
+    </xs:element>
+</xs:schema>
+
+SOAP Endpoint Gateway Controller Routing Component (UserEndpoint.java):
+package com.example.demo.endpoint;
+
+import com.example.demo.model.SoapUser;
+import com.example.demo.service.UserService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.ws.server.endpoint.annotation.Endpoint;
+import org.springframework.ws.server.endpoint.annotation.PayloadRoot;
+import org.springframework.ws.server.endpoint.annotation.RequestPayload;
+import org.springframework.ws.server.endpoint.annotation.ResponsePayload;
+import org.w3c.dom.Element;
+import org.w3c.dom.Document;
+import javax.xml.parsers.DocumentBuilderFactory;
+
+@Endpoint
+public class UserEndpoint {
+
+    private static final String NAMESPACE_URI = "http://example.com/demo/webservice";
+
+    @Autowired
+    private UserService userService;
+
+    @PayloadRoot(namespace = NAMESPACE_URI, localPart = "GetUserRequest")
+    @ResponsePayload
+    public Element handleGetUserRequest(@RequestPayload Element request) throws Exception {
+        // Extracting target user id element values manually from request DOM payload
+        String idText = request.getElementsByTagNameNS("*", "id").item(0).getTextContent();
+        Long userId = Long.parseLong(idText);
+
+        SoapUser user = userService.getUserById(userId);
+
+        // Compiling returning GetUserResponse SOAP XML payload dynamically
+        Document doc = DocumentBuilderFactory.newInstance().newDocumentBuilder().newDocument();
+        Element response = doc.createElementNS(NAMESPACE_URI, "GetUserResponse");
+        
+        Element idNode = doc.createElementNS(NAMESPACE_URI, "id");
+        Element nameNode = doc.createElementNS(NAMESPACE_URI, "name");
+        Element emailNode = doc.createElementNS(NAMESPACE_URI, "email");
+
+        if (user != null) {
+            idNode.setTextContent(user.getId().toString());
+            nameNode.setTextContent(user.getName());
+            emailNode.setTextContent(user.getEmail());
+        } else {
+            idNode.setTextContent(userId.toString());
+            nameNode.setTextContent("Not Found");
+            emailNode.setTextContent("N/A");
+        }
+
+        response.appendChild(idNode);
+        response.appendChild(nameNode);
+        response.appendChild(emailNode);
+
+        return response;
+    }
+}
+Web Services Component Configuration Middleware (WebServiceConfig.java):
+package com.example.demo.config;
+
+import org.springframework.boot.web.servlet.ServletRegistrationBean;
+import org.springframework.context.ApplicationContext;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.core.io.ClassPathResource;
+import org.springframework.ws.config.annotation.EnableWs;
+import org.springframework.ws.config.annotation.WsConfigurerAdapter;
+import org.springframework.ws.transport.http.MessageDispatcherServlet;
+import org.springframework.ws.wsdl.wsdl11.DefaultWsdl11Definition;
+import org.springframework.xml.xsd.SimpleXsdSchema;
+import org.springframework.xml.xsd.XsdSchema;
+
+@EnableWs
+@Configuration
+public class WebServiceConfig extends WsConfigurerAdapter {
+
+    @Bean
+    public ServletRegistrationBean<MessageDispatcherServlet> messageDispatcherServlet(ApplicationContext applicationContext) {
+        MessageDispatcherServlet servlet = new MessageDispatcherServlet();
+        servlet.setApplicationContext(applicationContext);
+        servlet.setTransformWsdlLocations(true);
+        return new ServletRegistrationBean<>(servlet, "/ws/*");
+    }
+
+    // Dynamic WSDL compilation layer binding configuration properties implicitly
+    @Bean(name = "users")
+    public DefaultWsdl11Definition defaultWsdl11Definition(XsdSchema usersSchema) {
+        DefaultWsdl11Definition wsdl11Definition = new DefaultWsdl11Definition();
+        wsdl11Definition.setPortTypeName("UsersPort");
+        wsdl11Definition.setLocationUri("/ws");
+        wsdl11Definition.setTargetNamespace("http://example.com/demo/webservice");
+        wsdl11Definition.setSchema(usersSchema);
+        return wsdl11Definition;
+    }
+
+    @Bean
+    public XsdSchema usersSchema() {
+        return new SimpleXsdSchema(new ClassPathResource("users.xsd"));
+    }
+}
+
+Main Entrypoint Module Application Configuration (DemoApplication.java):
+package com.example.demo;
+
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+
+@SpringBootApplication
+public class DemoApplication {
+    public static void main(String[] args) {
+        SpringApplication.run(DemoApplication.class, args);
+    }
+}
+
+
+e)	 Test using SoapUI.
+Aim: To verify the exposed SOAP contract definition interface using test client tools to query live record endpoints. 
+How to Execute Verification:
+•	Execute DemoApplication.java inside your local compilation terminal. 
+•	Open any web browser window interface to view the compiled structure output by pulling up the automatic WSDL route endpoint path:
+http://localhost:8080/ws/users.wsdl
+•	Boot up SoapUI client utility or a generic client alternative.
+•	Choose New SOAP Project and provide the tracking link routing schema endpoint mapped inside step 2. 
+•	Construct a sample functional endpoint request message execution envelope inside the SoapUI client framework interface:
+
+Sample Request Payload XML Document Structure:
+<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/"
+                  xmlns:web="http://example.com/demo/webservice">
+   <soapenv:Header/>
+   <soapenv:Body>
+      <web:GetUserRequest>
+         <web:id>1</web:id>
+      </web:GetUserRequest>
+   </soapenv:Body>
+</soapenv:Envelope>
+
+Expected Response Output Verification Panel Window:
+<SOAP-ENV:Envelope xmlns:SOAP-ENV="http://schemas.xmlsoap.org/soap/envelope/">
+   <SOAP-ENV:Header/>
+   <SOAP-ENV:Body>
+      <GetUserResponse xmlns="http://example.com/demo/webservice">
+         <id>1</id>
+         <name>Rahul Kumar</name>
+         <email>rahul@aditya.edu.in</email>
+      </GetUserResponse>
+   </SOAP-ENV:Body>
+</SOAP-ENV:Envelope>
+ 
