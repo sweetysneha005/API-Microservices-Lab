@@ -1,0 +1,308 @@
+a)	Explore Spring Framework modules (e.g., Core, Data Access, Web)
+Aim: To explore and understand the core architectural modules of the Spring Framework (Core Container, Data Access/Integration, and Web) and document their respective roles and configurations.
+
+Conceptual Overview of Key Modules:
+•	Core Container: Consists of the Beans, Core, Context, and SpEL (Spring Expression Language) modules. It provides the fundamental IoC (Inversion of Control) and Dependency Injection features.
+•	Data Access / Integration: Includes JDBC, ORM, OXM, JMS, and the Transaction modules. It simplifies database connectivity, manages transaction states, and reduces boilerplate SQL exception-handling code.
+•	Web (MVC / WebFlux): Contains the Web, Web-Servlet (MVC), Web-Socket, and Web-Portlet modules. It implements the Model-View-Controller design pattern for building responsive, decoupled web applications.
+
+Project Structure:
+This exploration task acts as a foundational mapping of modules to Maven dependencies within our workspace configuration
+spring-modules-exploration/
+ ├── pom.xml
+ └── src/
+     └── main/
+         └── resources/
+             └── application.properties
+
+Dependency Mapping Configuration (pom.xml):	
+To include these modules in our enterprise stack, we configure their corresponding starters within the project's POM file:
+<dependencies>
+    <!-- 1. Core & Web Module Support -->
+    <dependency>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-web</artifactId>
+    </dependency>
+
+    <!-- 2. Data Access Module Support -->
+    <dependency>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-jdbc</artifactId>
+    </dependency>
+
+    <!-- 3. H2 Database Engine for local persistence -->
+    <dependency>
+        <groupId>com.h2database</groupId>
+        <artifactId>h2</artifactId>
+        <scope>runtime</scope>
+    </dependency>
+
+    <!-- 4. Spring Boot Test Module -->
+    <dependency>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-test</artifactId>
+        <scope>test</scope>
+    </dependency>
+</dependencies>
+
+Application Properties Configuration (application.properties):
+Configure local test credentials and enable the developer console:
+server.port=8080
+spring.datasource.url=jdbc:h2:mem:moduledb
+spring.datasource.driverClassName=org.h2.Driver
+spring.datasource.username=sa
+spring.datasource.password=
+spring.h2.console.enabled=true
+
+
+b)	Implement a Simple data access application using JDBC
+Aim: To design and implement a transactional database application using the Spring JDBC module and JdbcTemplate to perform simple CRUD query executions on an in-memory database.
+
+Procedure:
+•	Initialize a Spring Boot project via Spring Initializr with JDBC API and H2 Database dependencies. 
+•	Create an entity class named Product to represent stored data records.
+•	Construct a repository class leveraging Spring's JdbcTemplate to execute structured raw SQL commands.
+•	Establish a Command Line Runner component to initialize the database table and seed records upon startup.
+•	Run the main class to verify operational log outputs in the terminal. 
+Project Structure:
+spring-jdbc-app/
+ ├── src/
+ │   ├── main/
+ │   │   ├── java/com/example/demo/
+ │   │   │   ├── SpringJdbcApplication.java
+ │   │   │   ├── model/
+ │   │   │   │   └── Product.java
+ │   │   │   └── repository/
+ │   │   │       └── ProductRepository.java
+ │   │   └── resources/
+ │   │       └── application.properties
+ └── pom.xml
+
+Model Class (Product.java):
+package com.example.demo.model;
+
+public class Product {
+    private Long id;
+    private String name;
+    private Double price;
+
+    // Constructors
+    public Product() {}
+
+    public Product(Long id, String name, Double price) {
+        this.id = id;
+        this.name = name;
+        this.price = price;
+    }
+
+    // Getters and Setters
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
+
+    public String getName() { return name; }
+    public void setName(String name) { this.name = name; }
+
+    public Double getPrice() { return price; }
+    public void setPrice(Double price) { this.price = price; }
+
+    @Override
+    public String toString() {
+        return "Product{id=" + id + ", name='" + name + "', price=" + price + "}";
+    }
+}
+
+Repository Class (ProductRepository.java):
+package com.example.demo.repository;
+
+import com.example.demo.model.Product;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.RowMapper;
+import org.springframework.stereotype.Repository;
+
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.List;
+
+@Repository
+public class ProductRepository {
+
+    private final JdbcTemplate jdbcTemplate;
+
+    // Dependency Injection via constructor
+    public ProductRepository(JdbcTemplate jdbcTemplate) {
+        this.jdbcTemplate = jdbcTemplate;
+    }
+
+    // Create Table
+    public void createTable() {
+        String sql = "CREATE TABLE IF NOT EXISTS products(id BIGINT PRIMARY KEY, name VARCHAR(255), price DOUBLE)";
+        jdbcTemplate.execute(sql);
+    }
+
+    // Insert Product
+    public int save(Product product) {
+        String sql = "INSERT INTO products (id, name, price) VALUES (?, ?, ?)";
+        return jdbcTemplate.update(sql, product.getId(), product.getName(), product.getPrice());
+    }
+
+    // Retrieve All Products
+    public List<Product> findAll() {
+        String sql = "SELECT * FROM products";
+        return jdbcTemplate.query(sql, new ProductRowMapper());
+    }
+
+    // Custom RowMapper implementation
+    private static class ProductRowMapper implements RowMapper<Product> {
+        @Override
+        public Product mapRow(ResultSet rs, int rowNum) throws SQLException {
+            Product product = new Product();
+            product.setId(rs.getLong("id"));
+            product.setName(rs.getString("name"));
+            product.setPrice(rs.getDouble("price"));
+            return product;
+        }
+    }
+}
+
+Main Application Class (SpringJdbcApplication.java):
+package com.example.demo;
+
+import com.example.demo.model.Product;
+import com.example.demo.repository.ProductRepository;
+import org.springframework.boot.CommandLineRunner;
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.context.annotation.Bean;
+
+import java.util.List;
+
+@SpringBootApplication
+public class SpringJdbcApplication {
+
+    public static void main(String[] args) {
+        SpringApplication.run(SpringJdbcApplication.class, args);
+    }
+
+    @Bean
+    public CommandLineRunner demo(ProductRepository repository) {
+        return args -> {
+            System.out.println("--- Initializing H2 Database Schema ---");
+            repository.createTable();
+
+            System.out.println("--- Inserting Sample Product Records ---");
+            repository.save(new Product(101L, "MacBook Pro", 129999.00));
+            repository.save(new Product(102L, "Mechanical Keyboard", 4500.00));
+            repository.save(new Product(103L, "Wireless Mouse", 1800.00));
+
+            System.out.println("--- Querying Records from Database ---");
+            List<Product> products = repository.findAll();
+            for (Product p : products) {
+                System.out.println(p.toString());
+            }
+        };
+    }
+}
+
+Run the Application:
+Run the main class -> SpringJdbcApplication.java
+
+Output (Console Log):
+--- Initializing H2 Database Schema ---
+--- Inserting Sample Product Records ---
+--- Querying Records from Database ---
+Product{id=101, name='MacBook Pro', price=129999.0}
+Product{id=102, name='Mechanical Keyboard', price=4500.0}
+Product{id=103, name='Wireless Mouse', price=1800.0}
+
+
+c)	Create a web application using Spring MVC 
+Aim: To design and build a functional web application utilizing the Spring Web MVC framework to handle standard RESTful HTTP requests and yield dynamic structured string responses.
+
+Procedure:
+•	Set up a Spring Boot project configured with the Spring Web dependency. 
+•	Structure a specialized controller class utilizing @RestController. 
+•	Define request maps (@GetMapping) to configure custom routing. 
+•	Set up sample parameters using @RequestParam to receive inputs dynamically in the controller.
+•	Deploy the server locally on port 8080 and run verification requests via browser/client utility tool. 
+
+Project Structure:
+spring-mvc-web-app/
+ ├── src/
+ │   ├── main/
+ │   │   ├── java/com/example/demo/
+ │   │   │   ├── SpringMvcApplication.java
+ │   │   │   └── controller/
+ │   │   │       └── PortalController.java
+ │   │   └── resources/
+ │   │       └── application.properties
+ └── pom.xml
+
+Controller Class (PortalController.java):
+package com.example.demo.controller;
+
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+
+@RestController
+public class PortalController {
+
+    // Default entrypoint mapping
+    @GetMapping("/")
+    public String welcome() {
+        return "Welcome to Aditya University's Portal!";
+    }
+
+    // Dynamic greeting mapping using request parameters
+    @GetMapping("/greet")
+    public String greet(@RequestParam(value = "name", defaultValue = "Student") String name) {
+        return "Greetings, " + name + "! Welcome to your Spring Web MVC Dashboard.";
+    }
+}
+
+Main Application Class (SpringMvcApplication.java):
+package com.example.demo;
+
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+
+@SpringBootApplication
+public class SpringMvcApplication {
+
+    public static void main(String[] args) {
+        SpringApplication.run(SpringMvcApplication.class, args);
+    }
+}
+
+Run the Application:
+Run the main class -> SpringMvcApplication.java
+
+Output (Browser):
+URL 1:
+http://localhost:8080/
+
+Output:
+Welcome to Aditya University's Portal!
+URL 2:
+http://localhost:8080/greet?name=Aditya_Learner
+
+Output:
+Greetings, Aditya_Learner! Welcome to your Spring Web MVC Dashboard.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
