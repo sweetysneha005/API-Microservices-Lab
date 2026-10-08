@@ -1,0 +1,196 @@
+a)	Test CRUD operations
+Aim: To define a repository interface extending specialized Spring Data structural layers to inherently support sorting and chunk-based processing abstraction.
+
+Data Layer Repository Interface (UserRepository.java):
+package com.example.demo.repository;
+
+import com.example.demo.model.User;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
+import org.springframework.stereotype.Repository;
+import java.util.List;
+
+@Repository
+public interface UserRepository extends JpaRepository<User, Long> {
+    // Basic pagination and sorting structures are automatically provided by JpaRepository
+}
+
+
+
+b)	Use Pageable and Sort to implement pagination and sorting.
+Aim: To pass operational sorting matrices and dimensional boundary vectors using the Pageable and Sort interface paradigms into active data persistence streams.
+
+Business Logic Service Layer Component (UserService.java):
+package com.example.demo.service;
+
+import com.example.demo.model.User;
+import com.example.demo.repository.UserRepository;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.stereotype.Service;
+import java.util.List;
+
+@Service
+public class UserService {
+
+    @Autowired
+    private UserRepository userRepository;
+
+    // Implementation of Pagination and Sorting using Pageable
+    public Page<User> getUsersPagedAndSorted(int pageNo, int pageSize, String sortBy, String direction) {
+        Sort sort = direction.equalsIgnoreCase(Sort.Direction.ASC.name()) ? 
+                    Sort.by(sortBy).ascending() : Sort.by(sortBy).descending();
+        
+        Pageable pageable = PageRequest.of(pageNo, pageSize, sort);
+        return userRepository.findAll(pageable);
+    }
+}
+
+c)	Test pagination and sorting functionality.
+Aim: To evaluate chunked context parsing sequences safely via specialized integration checkpoints to confirm matching row segmentation parameters.
+JUnit Integration Test Suite Verifier (UserPaginationTest.java):
+package com.example.demo;
+
+import com.example.demo.model.User;
+import com.example.demo.repository.UserRepository;
+import com.example.demo.service.UserService;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.data.domain.Page;
+import java.util.Arrays;
+
+@SpringBootTest
+public class UserPaginationTest {
+
+    @Autowired
+    private UserRepository userRepository;
+
+    @Autowired
+    private UserService userService;
+
+    @BeforeEach
+    public void setupMockDatabaseData() {
+        userRepository.deleteAll();
+        
+        // Seed database with multiple records to test structural boundary slicing
+        userRepository.saveAll(Arrays.asList(
+            new User("Rahul Kumar", "rahul@aditya.edu.in"),
+            new User("Ananya Sen", "ananya@aditya.edu.in"),
+            new User("Vijay Sharma", "vijay@aditya.edu.in"),
+            new User("Bhavana Reddy", "bhavana@aditya.edu.in"),
+            new User("Deepak Verma", "deepak@aditya.edu.in")
+        ));
+    }
+
+    @Test
+    public void testPaginationAndSortingExecution() {
+        System.out.println("\n--- STARTING PAGINATION AND SORTING VERIFICATION TEST ---");
+        
+        // Requesting Page 0, with a size of 3 records, sorted by 'name' in Ascending order
+        int pageNo = 0;
+        int pageSize = 3;
+        Page<User> userPage = userService.getUsersPagedAndSorted(pageNo, pageSize, "name", "ASC");
+
+        System.out.println("[PAGINATION] Total Elements found in H2 Store: " + userPage.getTotalElements());
+        System.out.println("[PAGINATION] Total Pages compiled via segment metrics: " + userPage.getTotalPages());
+        System.out.println("[PAGINATION] Content elements inside current window (Page " + pageNo + "):");
+        
+        userPage.getContent().forEach(user -> 
+            System.out.println(" -> Name: " + user.getName() + " | Email: " + user.getEmail())
+        );
+        
+        System.out.println("--- PAGINATION AND SORTING VERIFICATION TEST COMPLETED ---\n");
+    }
+}
+
+d)	Implement custom sorting using @Query
+Aim: To enforce strict index querying schemas via structured custom JPQL declarations paired with descriptive sort arguments.
+Updated Repository Layer Interface with @Query Component (UserRepository.java):
+package com.example.demo.repository;
+
+import com.example.demo.model.User;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.stereotype.Repository;
+import java.util.List;
+
+@Repository
+public interface UserRepository extends JpaRepository<User, Long> {
+
+    // Custom data fetching using manual JPQL statement with structural Sort parameter integration
+    @Query("SELECT u FROM User u")
+    List<User> findAllUsersCustomSorted(Sort sort);
+}
+	
+Additional Execution Test to Verify @Query Sorting Strategy (UserCustomQueryTest.java):
+package com.example.demo;
+
+import com.example.demo.model.User;
+import com.example.demo.repository.UserRepository;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.data.domain.Sort;
+import java.util.List;
+
+@SpringBootTest
+public class UserCustomQueryTest {
+
+    @Autowired
+    private UserRepository userRepository;
+
+    @Test
+    public void testCustomQuerySortingExecution() {
+        System.out.println("\n--- STARTING CUSTOM @QUERY SORTING VERIFICATION TEST ---");
+        
+        // Formulating dynamic Sort strategy using target field constraints in descending order
+        Sort descSortOrder = Sort.by(Sort.Direction.DESC, "name");
+        List<User> customSortedList = userRepository.findAllUsersCustomSorted(descSortOrder);
+        
+        System.out.println("[@QUERY SORT] Fetching raw output mapping results directly down below:");
+        customSortedList.forEach(user -> 
+            System.out.println(" -> Name: " + user.getName() + " | Email: " + user.getEmail())
+        );
+        
+        System.out.println("--- CUSTOM @QUERY SORTING VERIFICATION TEST COMPLETED ---\n");
+    }
+}
+
+
+Run the Application:
+Execute the combined automated testing frameworks inside your terminal shell using standard Maven parameters:
+	mvn test -Dtest=UserPaginationTest,UserCustomQueryTest
+
+
+
+
+Output (Console Verification Log Window):
+--- STARTING PAGINATION AND SORTING VERIFICATION TEST ---
+Hibernate: select count(u1_0.id) from users u1_0
+Hibernate: select u1_0.id,u1_0.email,u1_0.name from users u1_0 order by u1_0.name asc fetch first ? rows only
+[PAGINATION] Total Elements found in H2 Store: 5
+[PAGINATION] Total Pages compiled via segment metrics: 2
+[PAGINATION] Content elements inside current window (Page 0):
+ -> Name: Ananya Sen | Email: ananya@aditya.edu.in
+ -> Name: Bhavana Reddy | Email: bhavana@aditya.edu.in
+ -> Name: Deepak Verma | Email: deepak@aditya.edu.in
+--- PAGINATION AND SORTING VERIFICATION TEST COMPLETED ---
+
+--- STARTING CUSTOM @QUERY SORTING VERIFICATION TEST ---
+Hibernate: select u1_0.id,u1_0.email,u1_0.name from users u1_0 order by u1_0.name desc
+[@QUERY SORT] Fetching raw output mapping results directly down below:
+ -> Name: Vijay Sharma | Email: vijay@aditya.edu.in
+ -> Name: Rahul Kumar | Email: rahul@aditya.edu.in
+ -> Name: Deepak Verma | Email: deepak@aditya.edu.in
+ -> Name: Bhavana Reddy | Email: bhavana@aditya.edu.in
+ -> Name: Ananya Sen | Email: ananya@aditya.edu.in
+--- CUSTOM @QUERY SORTING VERIFICATION TEST COMPLETED 
