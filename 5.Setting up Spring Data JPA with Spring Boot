@@ -1,0 +1,240 @@
+a)	Create a new Spring Boot project.
+Aim: To bootstrap a structured Spring Boot application using Spring Initializr configured with database connectivity and persistence dependencies. 
+
+Procedure:
+1.	Navigate to the online initialization interface at [https://start.spring.io/](https://start.spring.io/). 
+2.	Set up the project configuration variables: 
+o	Project: Maven Project 
+o	Language: Java 
+o	Spring Boot: Latest Stable Version 
+3.	Click Add Dependencies and select the following operational modules: 
+o	Spring Web
+o	Spring Data JPA (Java Persistence API bundle) 
+o	H2 Database (In-memory structural relational SQL runtime engine) 
+4.	Select Generate to export and download the complete repository zip archive file. 
+5.	Unpack the compressed project files and import the root path into your IDE (VS Code / IntelliJ). 
+
+b)	Add Spring Data JPA dependency.
+Aim: To verify and explicitly define structural persistence and database driver capabilities within the core build orchestration document. 
+
+Dependencies Configuration (pom.xml):
+<dependencies>
+    <!-- Core Spring Boot Web Starter Layer -->
+    <dependency>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-web</artifactId>
+    </dependency>
+
+    <!-- Spring Data JPA Starter Layer for Object-Relational Mapping -->
+    <dependency>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-data-jpa</artifactId>
+    </dependency>
+
+    <!-- H2 Relational Database Engine Runtime Scope -->
+    <dependency>
+        <groupId>com.h2database</groupId>
+        <artifactId>h2</artifactId>
+        <scope>runtime</scope>
+    </dependency>
+
+    <!-- Spring Boot Test Core Suite Configuration Layer -->
+    <dependency>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-test</artifactId>
+        <scope>test</scope>
+    </dependency>
+</dependencies>
+
+c)	Configure database connection properties.
+Aim: To implement precise connection pool strings, dialect paths, schema lifecycle rules, and debug properties within the application configuration environment. 
+
+Application Properties (src/main/resources/application.properties):
+# Web Server Deployment Configuration Port
+server.port=8080
+
+# Relational In-Memory H2 Engine Database Interconnection Properties
+spring.datasource.url=jdbc:h2:mem:testdb
+spring.datasource.driverClassName=org.h2.Driver
+spring.datasource.username=sa
+spring.datasource.password=
+
+# Hibernate Core Object-Relational Mapping Framework Strategy Drivers
+spring.jpa.database-platform=org.hibernate.dialect.H2Dialect
+spring.jpa.hibernate.ddl-auto=update
+spring.jpa.show-sql=true
+
+# Developer In-Browser Graphic Terminal System Interconnection Console
+spring.h2.console.enabled=true
+
+
+d)	Create an entity class (e.g., User).
+Aim: To establish a database-mapped schema model layer utilizing standard Java Persistence API specification specifications. 
+
+User Persistence Entity Structure (User.java):
+package com.example.demo.model;
+
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
+
+@Entity // Designates this Java class object as a database table relation schema mapping
+@Table(name = "users")
+public class User {
+
+    @Id // Explicitly markers this field instance variable as the relational Primary Key component
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+    
+    private String name;
+    private String email;
+
+    // Default No-Args Constructor required implicitly by the JPA Specification runtime
+    public User() {}
+
+    // Multi-argument field population constructor layer logic
+    public User(String name, String email) {
+        this.name = name;
+        this.email = email;
+    }
+
+    // Encapsulated field Accessors and Mutators
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
+
+    public String getName() { return name; }
+    public void setName(String name) { this.name = name; }
+
+    public String getEmail() { return email; }
+    public void setEmail(String email) { this.email = email; }
+
+    @Override
+    public String toString() {
+        return "User{id=" + id + ", name='" + name + "', email='" + email + "'}";
+    }
+}
+
+e)	 Create a repository interface (e.g., UserRepository).
+Aim: To write a structural interface layer extending data abstractions to inherit standard out-of-the-box CRUD processing capabilities. 
+
+Data Layer Persistence Abstraction Interface (UserRepository.java):
+package com.example.demo.repository;
+
+import com.example.demo.model.User;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
+
+@Repository // Declares a dedicated abstract data manipulation persistence bean component route
+public interface UserRepository extends JpaRepository<User, Long> {
+    // Standard CRUD abstractions (save, findAll, findById, deleteById) are extended implicitly
+}
+
+f)	Test CRUD operations
+Aim: To safely evaluate, trigger, and verify create, read, update, and delete pipeline mechanisms against the live in-memory database configuration context. 
+
+Master Orchestration Bootstrap Entrypoint Class (DemoApplication.java):
+package com.example.demo;
+
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+
+@SpringBootApplication
+public class DemoApplication {
+    public static void main(String[] args) {
+        SpringApplication.run(DemoApplication.class, args);
+    }
+}
+JUnit Persistence Lifecycle Context Verification Test (UserCrudTest.java):	
+package com.example.demo;
+
+import com.example.demo.model.User;
+import com.example.demo.repository.UserRepository;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import java.util.Optional;
+import java.util.List;
+
+@SpringBootTest
+public class UserCrudTest {
+
+    @Autowired
+    private UserRepository userRepository;
+
+    @Test
+    public void executeDatabaseCrudSequence() {
+        System.out.println("\n================= INITIALIZING DATA JPA TESTS =================");
+
+        // 1. CREATE OPERATION
+        User studentA = new User("John Doe", "john.doe@aditya.edu.in");
+        User studentB = new User("Alice Smith", "alice.s@aditya.edu.in");
+        userRepository.save(studentA);
+        userRepository.save(studentB);
+        System.out.println("[CREATE] Success! Injected persistent models inside H2 database instance context.");
+
+        // 2. READ ALL OPERATION
+        List<User> activeUsers = userRepository.findAll();
+        System.out.println("[READ ALL] Displaying existing user schema records below:");
+        activeUsers.forEach(System.out.println);
+
+        // 3. UPDATE OPERATION
+        Optional<User> foundUserOpt = userRepository.findById(1L);
+        if (foundUserOpt.isPresent()) {
+            User existingUser = foundUserOpt.get();
+            existingUser.setName("John Developer");
+            userRepository.save(existingUser);
+            System.out.println("[UPDATE] Success! Synchronized altered fields to record index ID: 1");
+        }
+
+        // Verify Update Action Result
+        System.out.println("[READ INDIVIDUAL] Verifying changes made to Record index ID 1:");
+        userRepository.findById(1L).ifPresent(System.out.println);
+
+        // 4. DELETE OPERATION
+        userRepository.deleteById(2L);
+        System.out.println("[DELETE] Terminated record row corresponding to Identifier Index ID: 2");
+
+        // Confirm Final Context Volume Status
+        long runtimeRecordCount = userRepository.count();
+        System.out.println("[COUNT] Remaining Database Row Balance Vector Total: " + runtimeRecordCount);
+        System.out.println("================== DATA JPA TESTS COMPLETED ==================\n");
+    }
+}
+
+Run the Application:
+Trigger the targeted integration testing terminal block directly within your workstation utilizing the standard Maven automation parameters:
+
+mvn test -Dtest=UserCrudTest
+
+
+
+Output (Console Verification Log Window):
+================= INITIALIZING DATA JPA TESTS =================
+Hibernate: drop table if exists users cascade 
+Hibernate: create table users (id bigint generated by default as identity, email varchar(255), name varchar(255), primary key (id))
+Hibernate: insert into users (id, email, name) values (default, ?, ?)
+Hibernate: insert into users (id, email, name) values (default, ?, ?)
+[CREATE] Success! Injected persistent models inside H2 database instance context.
+Hibernate: select u1_0.id,u1_0.email,u1_0.name from users u1_0
+[READ ALL] Displaying existing user schema records below:
+User{id=1, name='John Doe', email='john.doe@aditya.edu.in'}
+User{id=2, name='Alice Smith', email='alice.s@aditya.edu.in'}
+Hibernate: select u1_0.id,u1_0.email,u1_0.name from users u1_0 where u1_0.id=?
+Hibernate: update users set email=?, name=? where id=?
+[UPDATE] Success! Synchronized altered fields to record index ID: 1
+[READ INDIVIDUAL] Verifying changes made to Record index ID 1:
+Hibernate: select u1_0.id,u1_0.email,u1_0.name from users u1_0 where u1_0.id=?
+User{id=1, name='John Developer', email='john.doe@aditya.edu.in'}
+Hibernate: select u1_0.id from users u1_0 where u1_0.id=?
+Hibernate: delete from users where id=?
+[DELETE] Terminated record row corresponding to Identifier Index ID: 2
+Hibernate: select count(u1_0.id) from users u1_0
+[COUNT] Remaining Database Row Balance Vector Total: 1
+================== DATA JPA TESTS COMPLETED ==================
+
+
+
+
+
