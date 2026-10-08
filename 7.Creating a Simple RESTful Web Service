@@ -1,0 +1,159 @@
+a)	Create a new Spring Boot project.
+Aim: To bootstrap a structured Spring Boot application using Spring Initializr configured with the required dependencies for building web services.
+
+ Procedure:
+•	Navigate to the online initialization interface at [https://start.spring.io/](https://start.spring.io/).
+•	Configure the project parameters exactly as follows:
+o	Project: Maven Project
+o	Language: Java
+o	Spring Boot: Latest Stable Version
+•	Click Add Dependencies and select the mandatory module:
+o	Spring Web (Provides built-in Tomcat server and Spring MVC capabilities for REST endpoints).
+•	Select Generate to download the project bundle zip file.
+•	Extract the compressed archive and import the root folder paths into your IDE (VS Code / IntelliJ).
+b)	Create a new Spring Boot project.
+Aim: To establish a plain old Java object (POJO) that serves as the domain model data resource structure for carrying payload information.
+Project Structure:
+demo/
+ ├── src/
+ │   ├── main/
+ │   │   ├── java/com/example/demo/
+ │   │   │   ├── DemoApplication.java
+ │   │   │   ├── model/
+ │   │   │   │   └── User.java
+ │   │   │   └── controller/
+ │   │   │       └── UserController.java
+ │   │   └── resources/
+ │   │       └── application.properties
+ └── pom.xml
+
+User Resource Model Class (User.java):
+package com.example.demo.model;
+
+public class User {
+    private Long id;
+    private String name;
+    private String email;
+
+    // Default No-Args Constructor
+    public User() {}
+
+    // Multi-argument field population constructor
+    public User(Long id, String name, String email) {
+        this.id = id;
+        this.name = name;
+        this.email = email;
+    }
+
+    // Encapsulated Field Accessors and Mutators
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
+
+    public String getName() { return name; }
+    public void setName(String name) { this.name = name; }
+
+    public String getEmail() { return email; }
+    public void setEmail(String email) { this.email = email; }
+}
+c)	 Create a REST controller (e.g., UserController) & d. Implement CRUD operations.
+Aim: To write an architectural routing handler layer utilizing @RestController mappings to securely process HTTP operations (GET, POST, PUT, DELETE) using an in-memory collection stream.
+
+REST API Controller Implementation (UserController.java):
+package com.example.demo.controller;
+
+import com.example.demo.model.User;
+import org.springframework.web.bind.annotation.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+
+@RestController
+@RequestMapping("/api/users")
+public class UserController {
+
+    // Internal simulated list matrix repository for holding user resources
+    private final List<User> userList = new ArrayList<>();
+    private long currentId = 1;
+
+    public UserController() {
+        // Initializing mock static user index records for development checking
+        userList.add(new User(currentId++, "Rahul Kumar", "rahul@aditya.edu.in"));
+        userList.add(new User(currentId++, "Ananya Sen", "ananya@aditya.edu.in"));
+    }
+
+    // 1. READ ALL - HTTP GET
+    @GetMapping
+    public List<User> getAllUsers() {
+        return userList;
+    }
+
+    // 2. READ BY ID - HTTP GET
+    @GetMapping("/{id}")
+    public User getUserById(@PathVariable Long id) {
+        return userList.stream()
+                .filter(user -> user.getId().equals(id))
+                .findFirst()
+                .orElseThrow(() -> new RuntimeException("User Record Index ID: " + id + " not found!"));
+    }
+
+    // 3. CREATE - HTTP POST
+    @PostMapping
+    public User createUser(@RequestBody User newUser) {
+        newUser.setId(currentId++);
+        userList.add(newUser);
+        return newUser;
+    }
+
+    // 4. UPDATE - HTTP PUT
+    @PutMapping("/{id}")
+    public User updateUser(@PathVariable Long id, @RequestBody User updatedUserData) {
+        User existingUser = userList.stream()
+                .filter(user -> user.getId().equals(id))
+                .findFirst()
+                .orElseThrow(() -> new RuntimeException("User Record Index ID: " + id + " not found!"));
+
+        existingUser.setName(updatedUserData.getName());
+        existingUser.setEmail(updatedUserData.getEmail());
+        return existingUser;
+    }
+
+    // 5. DELETE - HTTP DELETE
+    @DeleteMapping("/{id}")
+    public String deleteUser(@PathVariable Long id) {
+        User existingUser = userList.stream()
+                .filter(user -> user.getId().equals(id))
+                .findFirst()
+                .orElseThrow(() -> new RuntimeException("User Record Index ID: " + id + " not found!"));
+
+        userList.remove(existingUser);
+        return "User record matching Index identifier ID " + id + " has been completely removed.";
+    }
+}
+
+
+
+Main Application Bootstrap Class (DemoApplication.java):
+package com.example.demo;
+
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+
+@SpringBootApplication
+public class DemoApplication {
+    public static void main(String[] args) {
+        SpringApplication.run(DemoApplication.class, args);
+    }
+}
+
+
+
+d)	 Test using Postman or curl.
+Aim: To evaluate endpoint pipeline health by tracking application request payload returns across diverse routing schemas.
+How to Run:
+1.	Execute DemoApplication.java inside your workspace terminal environment.
+2.	The server initialization process starts listening on default deployment port target 8080.
+
+Verification Operations (Endpoints Tracking Table):
+       
+ 
+
