@@ -1,0 +1,171 @@
+Create a REST controller.
+Aim: To bootstrap a specialized Spring Boot REST API layer using specialized communication decorators to accept incoming network data structures and return standardized HTTP status contexts. 
+
+Procedure:
+1.	Go to https://start.spring.io/. 
+2.	Select the following options: 
+o	Project: Maven Project 
+o	Language: Java 
+o	Spring Boot: Latest Stable Version 
+3.	Add the following dependency: 
+o	Spring Web
+4.	Click Generate to download the project zip bundle file. 
+5.	Extract the compressed file and open the project directory inside an IDE (VS Code or IntelliJ IDEA). 
+6.	Create the proper structural architecture packages (model, controller) within your IDE directory workspace. 
+7.	Run the main application class to boot up the embedded Tomcat server. 
+
+Project Structure:
+demo/
+ ├── src/
+ │   ├── main/
+ │   │   ├── java/com/example/demo/
+ │   │   │   ├── DemoApplication.java
+ │   │   │   ├── model/
+ │   │   │   │   └── Product.java
+ │   │   │   └── controller/
+ │   │   │       └── ProductController.java[cite: 2]
+ │   │   └── resources/[cite: 2]
+ │   │       └── application.properties[cite: 2]
+ └── pom.xml[cite: 2]
+
+
+
+
+Resource Data Model Class (Product.java):
+package com.example.demo.model;
+
+// Simple POJO representing the Product resource
+public class Product {
+    private Long id;
+    private String name;
+    private double price;
+
+    // Default No-Args Constructor
+    public Product() {}
+
+    // Parameterized Constructor
+    public Product(Long id, String name, double price) {
+        this.id = id;
+        this.name = name;
+        this.price = price;
+    }
+
+    // Encapsulated Field Accessors and Mutators
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
+
+    public String getName() { return name; }
+    public void setName(String name) { this.name = name; }
+
+    public double getPrice() { return price; }
+    public void setPrice(double price) { this.price = price; }
+}
+
+b)	Use @RequestBody to accept JSON data & c. Use ResponseEntity to return HTTP responses.
+Aim: To implement advanced data payload parsing routines using @RequestBody combined with explicit semantic verification returning customized metadata mappings via ResponseEntity. 
+REST API Controller Implementation (ProductController.java):
+package com.example.demo.controller;
+
+import com.example.demo.model.Product;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+
+@RestController
+@RequestMapping("/api/products")
+public class ProductController {
+
+    // Internal simulated list matrix repository for holding product resources
+    private final List<Product> productList = new ArrayList<>();
+    private long currentId = 1;
+
+    public ProductController() {
+        // Seeding standard initial data records
+        productList.add(new Product(currentId++, "Laptop", 75000.00));
+        productList.add(new Product(currentId++, "Smartphone", 25000.00));
+    }
+
+    // READ operation - Fetch all products with ResponseEntity
+    @GetMapping
+    public ResponseEntity<List<Product>> getAllProducts() {
+        return new ResponseEntity<>(productList, HttpStatus.OK);
+    }
+
+    // READ operation - Fetch product by ID with ResponseEntity (Handling Not Found)
+    @GetMapping("/{id}")
+    public ResponseEntity<?> getProductById(@PathVariable Long id) {
+        Optional<Product> productOpt = productList.stream()
+                .filter(p -> p.getId().equals(id))
+                .findFirst();
+
+        if (productOpt.isPresent()) {
+            return new ResponseEntity<>(productOpt.get(), HttpStatus.OK);
+        } else {
+            return new ResponseEntity<>("Product with ID " + id + " not found.", HttpStatus.NOT_FOUND);
+        }
+    }
+
+    // CREATE operation - Using @RequestBody and ResponseEntity
+    @PostMapping
+    public ResponseEntity<Product> createProduct(@RequestBody Product newProduct) {
+        newProduct.setId(currentId++);
+        productList.add(newProduct);
+        // Returning HTTP 201 Created alongside the newly processed resource object
+        return new ResponseEntity<>(newProduct, HttpStatus.CREATED);
+    }
+
+    // UPDATE operation - Using @RequestBody (Handling Context Matches)
+    @PutMapping("/{id}")
+    public ResponseEntity<?> updateProduct(@PathVariable Long id, @RequestBody Product updatedProductData) {
+        Optional<Product> productOpt = productList.stream()
+                .filter(p -> p.getId().equals(id))
+                .findFirst();
+
+        if (productOpt.isPresent()) {
+            Product existingProduct = productOpt.get();
+            existingProduct.setName(updatedProductData.getName());
+            existingProduct.setPrice(updatedProductData.getPrice());
+            return new ResponseEntity<>(existingProduct, HttpStatus.OK);
+        } else {
+            return new ResponseEntity<>("Failed to update: Product ID " + id + " does not exist.", HttpStatus.NOT_FOUND);
+        }
+    }
+
+    // DELETE operation - Returning explicit response status contexts
+    @DeleteMapping("/{id}")
+    public ResponseEntity<String> deleteProduct(@PathVariable Long id) {
+        boolean removed = productList.removeIf(p -> p.getId().equals(id));
+        
+        if (removed) {
+            return new ResponseEntity<>("Product deleted successfully.", HttpStatus.OK);
+        } else {
+            return new ResponseEntity<>("Cannot delete: Product ID " + id + " not found.", HttpStatus.NOT_FOUND);
+        }
+    }
+}
+
+Main Application Bootstrap Class (DemoApplication.java) [cite:2] :
+package com.example.demo;
+
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+
+@SpringBootApplication
+public class DemoApplication {
+    public static void main(String[] args) {
+        SpringApplication.run(DemoApplication.class, args);
+    }
+}
+
+
+c)	 Test using Postman or curl.
+Aim: To explicitly evaluate input binding filters alongside corresponding outgoing status envelopes across valid and semantic fault-boundary test conditions. 
+
+How to Run:
+Open up your code workspace and initialize DemoApplication.java[cite: 2].
+The compilation task spins up an embedded Tomcat server listening on port 8080[cite: 2].
+Verification Operations (Endpoints Tracking Table):
