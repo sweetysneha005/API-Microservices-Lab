@@ -1,0 +1,179 @@
+a)	Create and run a Spring Boot application using Spring Initializr.
+Aim: To bootstrap a standard Maven-based Spring Boot application integrated with the necessary Aspect-Oriented Programming starter modules.
+
+Procedure:
+•	Navigate to the official initialization portal at https://start.spring.io/. 
+•	Configure the metadata with the following parameters:
+•	Project: Maven Project 
+•	Language: Java 
+•	Spring Boot: Latest stable version 
+•	Group: com.example
+•	Artifact: demo
+•	Java Version: 17 or higher
+•	Under the Dependencies section, select:
+o	Spring Web (for REST services and routing support) 
+•	Click Generate to compile the configuration files into a .zip archive. 
+•	Extract the file system to your workspace and open the directory inside your preferred IDE (IntelliJ IDEA or VS Code). 
+
+b)	Create and run a Spring Boot application using Spring Initializr.
+Aim: To configure a domain core model layer class alongside its decoupled business dependency management layer.
+Project Structure:
+demo/
+ ├── src/
+ │   ├── main/
+ │   │   ├── java/com/example/demo/
+ │   │   │   ├── DemoApplication.java
+ │   │   │   ├── model/
+ │   │   │   │   └── Student.java
+ │   │   │   ├── service/
+ │   │   │   │   └── StudentService.java
+ │   │   │   └── aspect/
+ │   │   │       └── LoggingAspect.java
+ │   │   └── resources/
+ │   │       └── application.properties
+ │   └── test/
+ │       └── java/com/example/demo/
+ │           └── StudentAopTest.java
+ └── pom.xml
+
+
+
+
+c)	Annotate StudentService with @Service and Student with @Component.
+Aim: To register the target functional application source instances into the Core Spring Inversion of Control (IoC) framework context directory using specialized component stereotypes. 
+.
+Student Domain Model Bean (Student.java):
+package com.example.demo.model;
+
+import org.springframework.stereotype.Component;
+@Component // Annotate Student with @Component
+public class Student {
+    private String name = "John Doe";
+    private String rollNo = "251AI024";
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public String getRollNo() {
+        return rollNo;
+    }
+
+    public void setRollNo(String rollNo) {
+        this.rollNo = rollNo;
+    }
+}
+
+Student Business Service Class Layer (StudentService.java):
+package com.example.demo.service;
+
+import com.example.demo.model.Student;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+@Service // Annotate StudentService with @Service
+public class StudentService {
+
+    @Autowired
+    private Student student;
+
+    public void displayStudentDetails() {
+        System.out.println("[Service Method] Core logic: Student name is " + student.getName() + " with Roll Series: " + student.getRollNo());
+    }
+    public void updateStudentName(String newName) {
+        System.out.println("[Service Method] Core logic: Modifying current name fields to: " + newName);
+        student.setName(newName);
+    }
+}
+
+d)	Implement AOP advice using @Aspect and @Before.
+Aim: To define cross-cutting modular logic components that execute transparently before explicit business implementation join points run.
+
+Logging Configuration Aspect Layer Component (LoggingAspect.java):
+package com.example.demo.aspect;
+
+import org.aspectj.lang.JoinPoint;
+import org.aspectj.lang.annotation.Aspect;
+import org.aspectj.lang.annotation.Before;
+import org.springframework.stereotype.Component;
+
+@Aspect // Declares the component class as an isolated Aspect concern configuration
+@Component
+public class LoggingAspect {
+
+    // Before advice configured globally across every executable signature found inside StudentService
+    @Before("execution(* com.example.demo.service.StudentService.*(..))")
+    public void logBeforeMethodCall(JoinPoint joinPoint) {
+        String targetedMethodName = joinPoint.getSignature().getName();
+        System.out.println("[AOP-BEFORE] Intercepting execution route! Triggering before: " + targetedMethodName);
+    }
+}
+
+e)	Apply AOP advice to StudentService methods.
+Aim: To link proxy configurations implicitly into the container runner using structural declarations.
+
+Main Inversion-of-Control Configuration Class Entrypoint (DemoApplication.java):
+package com.example.demo;
+
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.context.annotation.EnableAspectJAutoProxy;
+
+@SpringBootApplication
+@EnableAspectJAutoProxy // Forces the context runtime tracking engine to scan components tagged with @Aspect
+public class DemoApplication {
+    public static void main(String[] args) {
+        SpringApplication.run(DemoApplication.class, args);
+    }
+}
+
+f)	Write a test class to verify AOP functionality.
+Aim: To test, run, and execute code assertions that confirm interceptors are applied securely and in the correct order.
+
+JUnit Context Integration Test Verifier (StudentAopTest.java):
+package com.example.demo;
+
+import com.example.demo.service.StudentService;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+
+@SpringBootTest
+public class StudentAopTest {
+
+    @Autowired
+    private StudentService studentService;
+
+    @Test
+    public void testAopAdviceInterception() {
+        System.out.println("====== SYSTEM TEST INITIALIZATION ======");
+        
+        // Triggers advice interception hook immediately before standard execution block running
+        studentService.displayStudentDetails();
+        
+   System.out.println("=========================================");
+        
+        // Confirms advice runtime layer intercepts parameter operations seamlessly
+        studentService.updateStudentName("Alice Smith");
+        System.out.println("========= SYSTEM TEST COMPLETED =========");
+    }
+}
+
+
+Run the Application:
+Execute the targeted testing sequence inside terminal shells directly using the following Maven execution line:
+
+mvn test -Dtest=StudentAopTest
+
+Output (Console Log verification window output):
+====== SYSTEM TEST INITIALIZATION ======
+[AOP-BEFORE] Intercepting execution route! Triggering before: displayStudentDetails
+[Service Method] Core logic: Student name is John Doe with Roll Series: 251AI024
+=========================================
+[AOP-BEFORE] Intercepting execution route! Triggering before: updateStudentName
+[Service Method] Core logic: Modifying current name fields to: Alice Smith
+========= SYSTEM TEST COMPLETED =========
