@@ -1,0 +1,212 @@
+a)	Create and run a Spring Boot application using Spring Initializr.
+Aim: To create and run a Spring Boot application using Spring Initializr.
+
+Procedure:
+1.	Go to https://start.spring.io/
+2.	Select:
+o	Project: Maven
+o	Language: Java
+o	Spring Boot: Latest Version
+3.	Add Dependency:
+o	Spring Web
+4.	Click Generate
+5.	Extract and open in VS Code / IntelliJ
+6.	Run the main application.
+Project Structure:
+src/main/java/com/example/demo
+-- DemoApplication.java
+--HelloController.java
+
+Main Class:
+package com.example.demo;
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+@SpringBootApplication
+public class DemoApplication
+{
+public static void main(String[] args)
+{
+SpringApplication.run(DemoApplication.class, args);
+}
+}
+Controller Class:
+package com.example.demo;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RestController;
+@RestController
+public class HelloController {
+@GetMapping("/")
+public String home() {
+return "Welcome to Spring Boot Application";
+}
+@GetMapping("/hello")
+public String hello() {
+return "Hello World from Spring Boot!";
+}
+}
+
+Run the Application:
+Run the main class → DemoApplication.java
+
+Output (Browser):
+URL 1:
+http://localhost:8080/
+Output:
+Welcome to Spring Boot Application
+
+URL 2:
+http://localhost:8080/hello
+Output:
+Hello World from Spring Boot!
+
+	
+b)	Configure the project structure and dependencies.
+Aim:To configure the project structure and dependencies of a Spring Boot application created using Spring Initializr.
+
+Project Structure:
+After generating the project, the folder structure will look like:
+demo/
+ ├── src/
+ │   ├── main/
+ │   │   ├── java/com/example/demo/
+ │   │   │   ├── DemoApplication.java
+ │   │   │   ├── controller/
+ │   │   │   │   └── HelloController.java
+ │   │   │   ├── service/
+ │   │   │   ├── repository/
+ │   │   │   └── model/
+ │   │   └── resources/
+ │   │       ├── application.properties
+ │   │       └── static/
+ │   └── test/
+ │       └── java/com/example/demo/
+ ├── pom.xml
+ └── mvnw
+
+Explanation of Structure:
+•	DemoApplication.java → Main class (entry point)
+•	controller/ → Handles HTTP requests
+•	service/ → Business logic layer
+•	repository/ → Database interaction
+•	model/ → Entity classes
+•	application.properties → Configuration file
+•	pom.xml → Dependency management
+Dependencies Configuration (pom.xml):
+Add required dependencies in pom.xml:
+<dependencies>
+
+    <!-- Spring Boot Starter Web -->
+    <dependency>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-web</artifactId>
+    </dependency>
+
+    <!-- Spring Boot Starter Data JPA -->
+    <dependency>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-data-jpa</artifactId>
+    </dependency>
+
+    <!-- H2 Database (for testing) -->
+    <dependency>
+        <groupId>com.h2database</groupId>
+        <artifactId>h2</artifactId>
+        <scope>runtime</scope>
+    </dependency>
+
+    <!-- Lombok (optional) -->
+    <dependency>
+        <groupId>org.projectlombok</groupId>
+        <artifactId>lombok</artifactId>
+        <optional>true</optional>
+    </dependency>
+
+    <!-- Spring Boot Test -->
+    <dependency>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-test</artifactId>
+        <scope>test</scope>
+    </dependency>
+
+</dependencies>
+
+
+Application Properties Configuration:
+server.port=8080
+
+spring.datasource.url=jdbc:h2:mem:testdb
+spring.datasource.driverClassName=org.h2.Driver
+spring.datasource.username=sa
+spring.datasource.password=
+
+spring.jpa.database-platform=org.hibernate.dialect.H2Dialect
+spring.jpa.hibernate.ddl-auto=update
+spring.h2.console.enabled=true
+
+Sample Controller to Test Configuration:
+@RestController
+public class HelloController {
+
+    @GetMapping("/test")
+    public String test() {
+        return "Project Configured Successfully";
+    }
+}
+
+
+Run the Application:
+Run DemoApplication.java
+
+Output (Browser):
+http://localhost:8080/test
+Output:
+Project Configured Successfully
+
+
+c)	Write a simple "Hello World" application using Spring
+
+Aim: To create a simple "Hello World" application using Spring Boot.
+
+Procedure:
+1.	Create a Spring Boot project using Spring Initializr
+2.	Add dependency: Spring Web
+3.	Open the project in IDE (VS Code / IntelliJ)
+4.	Create a controller class
+5.	Run the application
+
+Main Class:
+package com.example.demo;
+
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+
+@SpringBootApplication
+public class DemoApplication {
+public static void main(String[] args) {
+SpringApplication.run(DemoApplication.class, args);
+}
+}
+Hello World Controller:
+package com.example.demo;
+
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+@RestController
+public class HelloController {
+@GetMapping("/hello")
+public String hello() {
+return "Hello World using Spring Boot!";
+}
+}
+
+How to Run:
+•	Run DemoApplication.java
+•	Open browser
+
+URL:
+http://localhost:8080/hello
+
+Output:
+Hello World using Spring Boot!
+ 
